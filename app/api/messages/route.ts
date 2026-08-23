@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
+import { deliverMessage } from "@/lib/whatsapp";
 
 /* GET — conversations list or messages of one conversation (?conversationId=) */
 export async function GET(req: Request) {
@@ -61,8 +62,10 @@ export async function POST(req: Request) {
         continue;
       }
       const conversation = await upsertConversation(p.phone, p.id);
-      await db.message.create({
-        data: { conversationId: conversation.id, direction: "OUT", body: content.replaceAll("{{name}}", p.name) },
+      await deliverMessage({
+        conversationId: conversation.id,
+        phone: p.phone,
+        body: content.replaceAll("{{name}}", p.name),
       });
       sent++;
     }
@@ -86,16 +89,10 @@ export async function POST(req: Request) {
   }
   if (!conversation) return NextResponse.json({ error: "Conversation introuvable." }, { status: 404 });
 
-  const message = await db.message.create({
-    data: {
-      conversationId: conversation.id,
-      direction: "OUT",
-      body: content.replaceAll("{{name}}", conversation.patient?.name ?? ""),
-    },
+  await deliverMessage({
+    conversationId: conversation.id,
+    phone: conversation.phone,
+    body: content.replaceAll("{{name}}", conversation.patient?.name ?? ""),
   });
-  await db.conversation.update({
-    where: { id: conversation.id },
-    data: { lastMessageAt: new Date() },
-  });
-  return NextResponse.json({ message });
+  return NextResponse.json({ ok: true });
 }

@@ -153,6 +153,8 @@ model Booking {
   status         BookingStatus @default(PENDING_CONFIRMATION)
   source         BookingSource @default(MANUAL)
   completedAt    DateTime?
+  reminded1At    DateTime?
+  reminded2At    DateTime?
   createdAt      DateTime      @default(now())
   visits         Visit[]
 }
@@ -329,6 +331,7 @@ model Conversation {
   patientId     String?
   patient       Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
   phone         String
+  botState      Json?
   lastMessageAt DateTime @default(now())
   messages      Message[]
 }
