@@ -1,0 +1,37 @@
+{
+  "name": "SIR — Gestion de clinique",
+  "short_name": "SIR",
+  "description": "Portail Patients & Personnel — Clinique dentaire SIR",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f5fb",
+  "theme_color": "#5b5bf0",
+  "lang": "fr",
+  "dir": "auto",
+  "categories": ["medical", "productivity", "business"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Secrétaire",
+      "url": "/dashboard/secretary",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Médecin",
+      "url": "/dashboard/doctor",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Propriétaire",
+      "url": "/dashboard/owner",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
