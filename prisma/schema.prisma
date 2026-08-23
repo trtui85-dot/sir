@@ -1,0 +1,375 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  DOCTOR
+  SECRETARY
+}
+
+enum BookingStatus {
+  PENDING_CONFIRMATION
+  CONFIRMED
+  IN_WAITING_ROOM
+  IN_TREATMENT
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum BookingSource {
+  MANUAL
+  WHATSAPP
+}
+
+enum WindowMode {
+  FLEXIBLE
+  EXACT_TIME
+}
+
+enum PaymentMethod {
+  CASH
+  BANKILY
+  MASRIVI
+  BANK_TRANSFER
+  CREDIT
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  VOID
+}
+
+enum CompensationType {
+  FIXED_SALARY
+  SALARY_PLUS_PERCENT
+}
+
+enum MessageDirection {
+  OUT
+  IN
+}
+
+model User {
+  id              String         @id @default(cuid())
+  phone           String         @unique
+  password        String
+  name            String
+  role            Role
+  active          Boolean        @default(true)
+  language        String         @default("fr")
+  permissions     Json?
+  doctorProfile   DoctorProfile? @relation(fields: [doctorProfileId], references: [id])
+  doctorProfileId String?        @unique
+  createdAt       DateTime       @default(now())
+  staffPayments   StaffPayment[]
+  notes           MedicalNote[]
+}
+
+model DoctorProfile {
+  id               String           @id @default(cuid())
+  name             String
+  specialty        String?
+  compensation     CompensationType @default(FIXED_SALARY)
+  salaryAmount     Float            @default(0)
+  percentRate      Float            @default(0)
+  user             User?
+  visits           Visit[]
+  bookings         Booking[]
+  treatmentPlans   TreatmentPlan[]
+}
+
+model Patient {
+  id                String   @id @default(cuid())
+  name              String
+  phone             String?
+  age               Int?
+  gender            String?
+  address           String?
+  medicalBackground String?
+  doctorPreference  String?
+  status            String   @default("ACTIVE")
+  internalNote      String?
+  createdAt         DateTime @default(now())
+  bookings          Booking[]
+  visits            Visit[]
+  treatmentPlans    TreatmentPlan[]
+  prescriptions     Prescription[]
+  medicalNotes      MedicalNote[]
+  toothConditions   ToothCondition[]
+  invoices          Invoice[]
+  payments          Payment[]
+  conversations     Conversation[]
+  documents         Document[]
+}
+
+model Service {
+  id          String  @id @default(cuid())
+  name        String
+  category    String  @default("General")
+  price       Float   @default(0)
+  emoji       String?
+  toothChart  Boolean @default(false)
+  isPublic    Boolean @default(true)
+  hidden      Boolean @default(false)
+  subItems    Json?
+  sortOrder   Int     @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model BookingWindow {
+  id          String     @id @default(cuid())
+  name        String
+  mode        WindowMode @default(FLEXIBLE)
+  days        Int[]      @default([1, 2, 3, 4, 5])
+  start       String
+  end         String
+  capacity    Int        @default(1)
+  slotMinutes Int        @default(30)
+  active      Boolean    @default(true)
+  bookings    Booking[]
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  patientId      String
+  patient        Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId       String?
+  doctor         DoctorProfile? @relation(fields: [doctorId], references: [id])
+  windowId       String?
+  window         BookingWindow? @relation(fields: [windowId], references: [id])
+  date           DateTime
+  time           String?
+  reason         String?
+  secretaryNotes String?
+  status         BookingStatus @default(PENDING_CONFIRMATION)
+  source         BookingSource @default(MANUAL)
+  completedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  visits         Visit[]
+}
+
+model Visit {
+  id           String   @id @default(cuid())
+  patientId    String
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId     String?
+  doctor       DoctorProfile? @relation(fields: [doctorId], references: [id])
+  bookingId    String?
+  booking      Booking? @relation(fields: [bookingId], references: [id])
+  servicesJson Json     @default("[]")
+  teeth        Int[]    @default([])
+  rawNotes     String?
+  aiNotes      String?
+  finalNotes   String?
+  totalAmount  Float    @default(0)
+  paidAmount   Float    @default(0)
+  freeVisit    Boolean  @default(false)
+  status       String   @default("COMPLETED")
+  visitDate    DateTime @default(now())
+}
+
+model TreatmentPlan {
+  id            String        @id @default(cuid())
+  patientId     String
+  patient       Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId      String?
+  doctor        DoctorProfile? @relation(fields: [doctorId], references: [id])
+  name          String
+  description   String?
+  itemsJson     Json          @default("[]")
+  totalAmount   Float         @default(0)
+  discountValue Float         @default(0)
+  sessionsTotal Int           @default(1)
+  sessionsDone  Int           @default(0)
+  sessionAmount Float        @default(0)
+  status        String        @default("IN_PROGRESS")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Prescription {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  content   String
+  createdBy String?
+  createdAt DateTime @default(now())
+}
+
+model MedicalNote {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  content   String
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model ToothCondition {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tooth     Int
+  condition String
+  note      String?
+  updatedAt DateTime @updatedAt
+
+  @@unique([patientId, tooth])
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title     String
+  url       String
+  mediaType String   @default("image")
+  uploadedBy String?
+  createdAt DateTime @default(now())
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  number        Int           @unique
+  patientId     String
+  patient       Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  itemsJson     Json          @default("[]")
+  subtotal      Float         @default(0)
+  discountType  String        @default("NONE")
+  discountValue Float         @default(0)
+  total         Float         @default(0)
+  paid          Float         @default(0)
+  status        InvoiceStatus @default(UNPAID)
+  note          String?
+  voidedAt      DateTime?
+  createdAt     DateTime      @default(now())
+  payments      Payment[]
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  invoiceId   String?
+  invoice     Invoice?      @relation(fields: [invoiceId], references: [id])
+  patientId   String?
+  patient     Patient?      @relation(fields: [patientId], references: [id])
+  amount      Float
+  method      PaymentMethod @default(CASH)
+  note        String?
+  screenshotUrl String?
+  verified    Boolean       @default(true)
+  voided      Boolean       @default(false)
+  voidReason  String?
+  createdById String?
+  createdAt   DateTime      @default(now())
+}
+
+model Expense {
+  id             String   @id @default(cuid())
+  label          String
+  amount         Float
+  category       String   @default("Other")
+  vendor         String?
+  receiptNote    String?
+  linkedPatientId String?
+  linkedDoctorId String?
+  isStockPurchase Boolean @default(false)
+  voided         Boolean  @default(false)
+  voidReason     String?
+  spentAt        DateTime @default(now())
+  createdAt      DateTime @default(now())
+}
+
+model StockItem {
+  id                String   @id @default(cuid())
+  name              String
+  category          String   @default("Consumables")
+  unitType          String   @default("piece")
+  quantity          Float    @default(0)
+  lowStockThreshold Float    @default(5)
+  supplier          String?
+  brandNote         String?
+  batchNote         String?
+  purchaseDate      DateTime?
+  unitPrice         Float     @default(0)
+  archived          Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model StaffPayment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Float
+  month     String
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model MessageTemplate {
+  id      String  @id @default(cuid())
+  key     String  @unique
+  label   String
+  content String
+  enabled Boolean @default(true)
+}
+
+model Conversation {
+  id            String   @id @default(cuid())
+  patientId     String?
+  patient       Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  phone         String
+  lastMessageAt DateTime @default(now())
+  messages      Message[]
+}
+
+model Message {
+  id            String           @id @default(cuid())
+  conversationId String
+  conversation  Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction     MessageDirection
+  body          String
+  mediaUrl      String?
+  read          Boolean          @default(false)
+  pendingReview Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+}
+
+model Broadcast {
+  id           String   @id @default(cuid())
+  content      String
+  sentCount    Int      @default(0)
+  skippedCount Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model ClinicSetting {
+  id                    String  @id @default("main")
+  clinicName            String  @default("SIR")
+  headerTitle           String  @default("Cabinet Dentaire SIR")
+  headerPhone           String?
+  headerAddress         String?
+  refundPolicy          String?
+  defaultLanguage       String  @default("fr")
+  childAgeLimit         Int     @default(12)
+  reminder1Hours        Int     @default(1)
+  reminder2Hours        Int     @default(48)
+  cancelHours           Int     @default(24)
+  adminPhones           String[] @default([])
+  reportLanguage        String  @default("fr")
+  whatsappConnected     Boolean @default(false)
+  whatsappPhone         String?
+  aiEnabled             Boolean @default(false)
+  useLetterhead         Boolean @default(false)
+  primaryColor          String  @default("#2563eb")
+}
