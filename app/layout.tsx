@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n";
 import { ToastProvider } from "@/components/ui";
 import { PWA } from "@/components/pwa";
+import { InstallPrompt } from "@/components/install-prompt";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <ToastProvider>{children}</ToastProvider>
         </LanguageProvider>
         <PWA />
+        <InstallPrompt />
       </body>
     </html>
   );

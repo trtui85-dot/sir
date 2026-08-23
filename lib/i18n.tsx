@@ -386,6 +386,12 @@ const dict: Record<string, { fr: string; ar: string }> = {
   suggested_questions: { fr: "Questions suggérées", ar: "أسئلة مقترحة" },
 
   days: { fr: ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] as unknown as string, ar: ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"] as unknown as string },
+
+  // PWA install
+  install_app: { fr: "Installer l'application", ar: "تثبيت التطبيق" },
+  install_hint: { fr: "Ajoutez SIR à votre écran d'accueil pour un accès rapide.", ar: "أضف سير إلى شاشتك الرئيسية للوصول السريع." },
+  ios_install_hint: { fr: "Sur iPhone : appuyez sur le bouton Partager puis « Sur l'écran d'accueil ».", ar: "على الآيفون: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية»." },
+  not_now: { fr: "Plus tard", ar: "لاحقاً" },
 };
 
 type Ctx = {
